@@ -23,7 +23,7 @@ class PresentationDisplay:
         self.crossfade_start_time = time.time()
         self.crossfade_end_time = time.time()
 
-    def setDisplay(self, displayNum):
+    def setDisplay(self, displayNum, fullscreen):
         # Destroy existing renderers/windows
         if self.texture:
             SDL_DestroyTexture(self.texture)
@@ -39,13 +39,17 @@ class PresentationDisplay:
         SDL_GetCurrentDisplayMode(displayNum, self.displayMode)
         self.height = self.displayMode.h
         self.width = self.displayMode.w
+        flags = SDL_WINDOW_SHOWN
+        if fullscreen:
+            flags = flags | SDL_WINDOW_FULLSCREEN_DESKTOP
+        else:
+            flags = flags | SDL_WINDOW_RESIZABLE
         self.window = sdl2.SDL_CreateWindow("DanceHUD Presentation Display",
                                             SDL_WINDOWPOS_UNDEFINED_DISPLAY(displayNum),
                                             SDL_WINDOWPOS_UNDEFINED_DISPLAY(displayNum),
                                             self.width,
                                             self.height,
-                                            SDL_WINDOW_SHOWN)
-        #SDL_SetWindowFullscreen(self.window, SDL_WINDOW_FULLSCREEN)
+                                            flags)
 
         # Create a renderer for the window
         self.renderer = SDL_CreateRenderer(self.window, -1, SDL_RENDERER_ACCELERATED + SDL_RENDERER_TARGETTEXTURE + SDL_RENDERER_PRESENTVSYNC)
@@ -53,6 +57,11 @@ class PresentationDisplay:
 
         # Create a texture to render to
         self.texture = SDL_CreateTexture(self.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, self.width, self.height)
+
+    def resizeWindow(self, window):
+        self.width = window.data1
+        self.height = window.data2
+
 
     def render(self):
         SDL_SetRenderTarget(self.renderer, self.texture)

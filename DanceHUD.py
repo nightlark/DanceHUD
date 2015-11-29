@@ -32,9 +32,9 @@ def main():
 
     # Create the song display window on a secondary display (if available)
     if sdl2.SDL_GetNumVideoDisplays() > 1:
-        presDisp.setDisplay(1)
+        presDisp.setDisplay(1, True)
     else:
-        presDisp.setDisplay(0)
+        presDisp.setDisplay(0, False)
 
     presDisp.setBackgroundColor(settings.BACKGROUND_COLOR)
 
@@ -79,8 +79,17 @@ def main():
             if event.type == sdl2.SDL_QUIT:
                 running = False
                 break
-            elif event.window.event == sdl2.SDL_WINDOWEVENT_CLOSE:
-                running = False
+            if event.type == sdl2.SDL_WINDOWEVENT:
+                if event.window.event == sdl2.SDL_WINDOWEVENT_CLOSE:
+                    running = False
+                    break
+                elif event.window.event == sdl2.SDL_WINDOWEVENT_RESIZED:
+                    presDisp.resizeWindow(event.window)
+                    break
+            elif event.type == sdl2.SDL_KEYUP:
+                if event.key.keyssym.sym == sdl2.SDLK_ESCAPE:
+                    running = False
+                    break
 
         # Should not happen unless user messes with the clock
         if time.time() < lastUpdate:
