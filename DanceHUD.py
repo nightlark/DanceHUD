@@ -87,7 +87,7 @@ def main():
                     presDisp.resizeWindow(event.window)
                     break
             elif event.type == sdl2.SDL_KEYUP:
-                if event.key.keyssym.sym == sdl2.SDLK_ESCAPE:
+                if event.key.keysym.sym == sdl2.SDLK_ESCAPE:
                     running = False
                     break
 
