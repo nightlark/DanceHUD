@@ -20,6 +20,8 @@ def init():
     global NEXT_SONG_GENRE_COLOR
     global BACKGROUND_COLOR
 
+    global NEW_SONG_BANNER_ICON
+
     global DANCE_IMAGE_PATH
 
     global BORDER_PADDING_HORIZONTAL
@@ -54,6 +56,8 @@ def init():
         CURR_SONG_NAME_COLOR = SDL_Color(165, 165, 165)
         NEXT_SONG_GENRE_COLOR = SDL_Color(215, 215, 215)
         BACKGROUND_COLOR = SDL_Color(0, 0, 0)
+
+    NEW_SONG_BANNER_ICON = os.path.join(os.getcwd(), "icons", "new-banner.png")
 
     DANCE_IMAGE_PATH = os.path.join(os.getenv("HOME"), "DanceHUD Settings", "image")
 

@@ -54,7 +54,7 @@ def main():
     currSongNameLoc.x = 300
     currSongNameLoc.y = 800
 
-    # Current song genre
+    # Current song
     currSongGenre = TextObject(presDisp.renderer, "", currSongGenreFont, color=settings.CURR_SONG_GENRE_COLOR)
     currSongGenreLoc = currSongGenre.dst
 
@@ -64,16 +64,27 @@ def main():
         next = TextObject(presDisp.renderer, "", nextSongGenreFont, color=settings.NEXT_SONG_GENRE_COLOR)
         nextSongGenres.append(next)
 
+    # New banner icons for songs
+    newSongBanners = []
+    for x in range(0, settings.NUM_UPCOMING_SONGS + 1):
+        next_banner = ImageObject(presDisp.renderer, settings.NEW_SONG_BANNER_ICON)
+        next_banner.dst.x = int(presDisp.width * settings.BORDER_PADDING_HORIZONTAL)
+        newSongBanners.append(next_banner)
+
     # Upcoming songs view for projector
     upcoming_view = [danceImg, currSongName, currSongGenre]
     upcoming_view.extend(nextSongGenres)
+    upcoming_view.extend(newSongBanners)
     presDisp.addObjects(upcoming_view)
 
     currSongState = []
     currSongID = ''
     lastUpdate = 0.0
     running = True
+
+    # Main loop for DanceHUD
     while (running):
+        # Handle user input and window events
         events = sdl2.ext.get_events()
         for event in events:
             if event.type == sdl2.SDL_QUIT:
@@ -95,77 +106,109 @@ def main():
         if time.time() < lastUpdate:
             lastUpdate = time.time()
 
-        # Update the list of songs
+        # Update the list of songs if enough time has passed since last update (or if currSongState is not initialized)
         if not currSongState or time.time() - lastUpdate > settings.UPDATE_TIME:
             currSongState = getSongState()
-            maxGenreWidth = updateUpcomingSongDisplay(currSongState, currSongName, currSongGenre, nextSongGenres, danceImg, presDisp)
+
+            # Update the displayed songs
+            maxGenreWidth = updateUpcomingSongDisplay(currSongState, currSongName, currSongGenre, nextSongGenres, newSongBanners, danceImg, presDisp)
+
+            # Check if the current song playing has changed
             if currSongState[0].persistentID() != currSongID:
-                # change image
+                # Change image shown
                 updateDanceImage(maxGenreWidth, currSongGenre.string, danceImg, presDisp)
+
+                # If there is already a current song, crossfade when updating the display
                 if currSongID != '':
                     if settings.ENABLE_CROSSFADE:
                         presDisp.crossfade_type = settings.CROSSFADE_TYPE
                         presDisp.beginCrossfade()
                 currSongID = currSongState[0].persistentID()
+
+                # Show a blank screen if no song is playing
                 if not currSongID:
-                    blankDisplay(currSongName, currSongGenre, nextSongGenres, danceImg, presDisp)
+                    blankDisplay(currSongName, currSongGenre, nextSongGenres, newSongBanners, danceImg, presDisp)
             lastUpdate = time.time()
 
+        # Render the display and show it on the screen
         presDisp.render()
         presDisp.present()
 
     # Shut down SDL2
     quitSDL2()
 
-
+# Gets info for the current track and upcoming tracks
 def getSongState():
     songState = []
     songState.append(iTB.currentTrack)
     songState.extend(iTB.getNextTracks(settings.NUM_UPCOMING_SONGS))
     return songState
 
-def blankDisplay(currSongName, currSongGenre, nextSongGenres, danceImg, disp):
+# Blanks out all of the current song information and the list of upcoming songs
+def blankDisplay(currSongName, currSongGenre, nextSongGenres, newSongBanners, danceImg, disp):
     currSongName.changeString(disp.renderer, "")
     currSongGenre.changeString(disp.renderer, "")
     for x in nextSongGenres:
         x.changeString(disp.renderer, "")
+    for x in newSongBanners:
+        x.changeVisible(False)
 
-def updateUpcomingSongDisplay(songState, currSongName, currSongGenre, nextSongGenres, danceImg, disp):
+# Updates the displayed information
+def updateUpcomingSongDisplay(songState, currSongName, currSongGenre, nextSongGenres, newSongBanners, danceImg, disp):
     maxGenreWidth = 0
     if iTB.currentPlaylist.name():
-        maxGenreWidth = updateGenreList(songState, currSongGenre, nextSongGenres, disp)
+        # Updates the upcoming genre list
+        maxGenreWidth = updateGenreList(songState, currSongGenre, nextSongGenres, newSongBanners, disp)
+
+        # Updates the current song name shown
         updateSongName(songState, currSongName, maxGenreWidth, disp)
+
+        # Updates visibility of new song banners
+        for banner in newSongBanners:
+            banner.changeVisible(False)
+        for index, song in enumerate(songState):
+            newSongBanners[index].changeVisible("check" in song.comment().lower())
+
+        # Resizes the dance image to avoid overlap with the upcoming dance list
         resizeDanceImage(maxGenreWidth, danceImg, disp)
     return maxGenreWidth
 
-def updateGenreList(songState, currSongGenre, nextSongGenres, disp):
+# Updates the song genre list
+def updateGenreList(songState, currSongGenre, nextSongGenres, newSongBanners, disp):
     maxGenreWidth = 0
     track_num = 0
 
     # Update the genre for the current track
-    currSongGenre.changeString(disp.renderer, songState[0].genre())
+    currSongGenre.changeString(disp.renderer, songState[track_num].genre())
     currSongGenre.dst.x = int(disp.width * settings.BORDER_PADDING_HORIZONTAL)
     currSongGenre.dst.y = int(disp.height * settings.BORDER_PADDING_VERTICAL) + currSongGenre.dst.h*track_num
+    newSongBanners[track_num].dst.y =  int(currSongGenre.dst.y + disp.height*settings.BORDER_PADDING_VERTICAL)
+    newSongBanners[track_num].changeVisible("check" in songState[track_num].comment().lower())
     maxGenreWidth = currSongGenre.dst.w
 
-    for x in nextSongGenres:
+    # Updates the genre for upcoming tracks
+    for next in nextSongGenres:
         track_num += 1
         if track_num < len(songState):
-            x.changeString(disp.renderer, songState[track_num].genre())
-            x.dst.x = int(disp.width * settings.BORDER_PADDING_HORIZONTAL)
-            x.dst.y = int(disp.height * settings.BORDER_PADDING_VERTICAL) + x.dst.h*track_num
-            maxGenreWidth = max(x.dst.w, maxGenreWidth)
+            next.changeString(disp.renderer, songState[track_num].genre())
+            next.dst.x = int(disp.width * settings.BORDER_PADDING_HORIZONTAL)
+            next.dst.y = int(disp.height * settings.BORDER_PADDING_VERTICAL) + next.dst.h*track_num
+            newSongBanners[track_num].dst.y =  int(next.dst.y + disp.height*settings.BORDER_PADDING_VERTICAL)
+            newSongBanners[track_num].changeVisible("check" in songState[track_num].comment().lower())
+            maxGenreWidth = max(next.dst.w, maxGenreWidth)
         else:
-            x.changeString(disp.renderer, "")
+            next.changeString(disp.renderer, "")
 
     return maxGenreWidth
 
+# Updates the currently playing song name to display
 def updateSongName(songState, currSongName, maxGenreWidth, disp):
     maxNameWidth = float(disp.width*13.0/16.0 - maxGenreWidth)
     currSongName.changeString(disp.renderer, songState[0].name())
     currSongName.dst.x = int(disp.width*1.0/16.0 + maxGenreWidth + disp.width*1.0/16.0 + (maxNameWidth-currSongName.dst.w)/2.0)
     currSongName.dst.y = int(disp.height*24.0/32.0)
 
+# Changes the current dance image shown
 def updateDanceImage(maxGenreWidth, currGenre, danceImg, disp):
     print os.getenv("HOME")
     imagepath = os.path.join(os.getenv("HOME"), "DanceHUD Settings", "image")
@@ -194,9 +237,9 @@ def updateDanceImage(maxGenreWidth, currGenre, danceImg, disp):
         newImage = os.path.join(imagepath, imagelist[0])
 
     danceImg.changeImage(disp.renderer, newImage)
-
     resizeDanceImage(maxGenreWidth, danceImg, disp)
 
+# Returns a list of images in a directory
 def listImages(imagepath):
     filelist = os.listdir(imagepath)
     imagelist = []
@@ -205,6 +248,7 @@ def listImages(imagepath):
             imagelist.append(x)
     return imagelist
 
+# Resizes the dance image to constrain it to a maximum width
 def resizeDanceImage(maxGenreWidth, danceImg, disp):
     maxImageWidth = float(disp.width*13.0/16.0 - maxGenreWidth)
     maxImageHeight = float(disp.height*23.0/32.0)

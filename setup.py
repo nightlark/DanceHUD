@@ -9,7 +9,7 @@ from setuptools import setup
 
 APP = ['DanceHUD.py']
 DATA_FILES = [
-    ('', ['font'])
+    ('', ['font', 'icons'])
               ]
 OPTIONS = {
     'argv_emulation': True

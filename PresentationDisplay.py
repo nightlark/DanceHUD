@@ -152,6 +152,7 @@ class DrawableObject:
             self.dst = SDL_Rect()
         self.blendmode = SDL_BLENDMODE_NONE
         self.texture = None
+        self.visible = True
 
     def __del__(self):
         if self.texture:
@@ -167,9 +168,13 @@ class DrawableObject:
     def changeLocation(self, dst):
         self.dst = dst
 
+    def changeVisible(self, visible):
+        self.visible = visible
+
     def render(self, renderer):
-        SDL_SetRenderDrawBlendMode(renderer, self.blendmode)
-        sdl2.SDL_RenderCopy(renderer, self.texture, None, self.dst)
+        if self.visible:
+            SDL_SetRenderDrawBlendMode(renderer, self.blendmode)
+            sdl2.SDL_RenderCopy(renderer, self.texture, None, self.dst)
 
 
 class ImageObject(DrawableObject):
