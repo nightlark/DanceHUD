@@ -21,21 +21,13 @@ def init():
     playlistCount = playlistTracks.count
 
 def getNextTracks(numTracks):
-    cTindex = currentTrackIndex()
-    upcomingTracks = playlistTracks[cTindex:(cTindex+numTracks)]
-    replacementTracksNeeded = 0
-    for x in upcomingTracks:
-        if not x.enabled():
-            upcomingTracks.remove(x)
-            replacementTracksNeeded += 1
+    index = currentTrackIndex()
+    upcomingTracks = []
 
-    index = cTindex + numTracks
-
-    while replacementTracksNeeded > 0 and index < playlistCount():
+    while len(upcomingTracks) < numTracks and index < playlistCount():
         nextTrack = playlistTracks[index]
         if nextTrack.enabled():
             upcomingTracks.append(nextTrack)
-            replacementTracksNeeded -= 1
         index +=1
 
     return upcomingTracks
