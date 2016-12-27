@@ -52,7 +52,7 @@ def init():
         NEXT_SONG_GENRE_COLOR = SDL_Color(15, 15, 15)
         BACKGROUND_COLOR = SDL_Color(255, 255, 255)
     elif COLOR_THEME == 'DARK':
-        CURR_SONG_GENRE_COLOR = SDL_Color(255, 75, 75)
+        CURR_SONG_GENRE_COLOR = SDL_Color(75, 255, 75)
         CURR_SONG_NAME_COLOR = SDL_Color(165, 165, 165)
         NEXT_SONG_GENRE_COLOR = SDL_Color(215, 215, 215)
         BACKGROUND_COLOR = SDL_Color(0, 0, 0)
